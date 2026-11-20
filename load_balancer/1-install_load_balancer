@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Installs and configures HAProxy as a round-robin load balancer
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Please run this script as root"
+    exit 1
+fi
+
+set -e
+
+apt-get update -y
+apt-get install -y haproxy
+
+cat > /etc/haproxy/haproxy.cfg <<'HAPROXY'
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    daemon
+
+defaults
+    log global
+    mode http
+    option httplog
+    option dontlognull
+    timeout connect 5000
+    timeout client 50000
+    timeout server 50000
+
+frontend http_front
+    bind *:80
+    default_backend web_servers
+
+backend web_servers
+    balance roundrobin
+    server 7423-web-01 18.134.226.27:80 check
+    server 7423-web-02 35.176.119.210:80 check
+HAPROXY
+
+haproxy -c -f /etc/haproxy/haproxy.cfg
+service haproxy restart

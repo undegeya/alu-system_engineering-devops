@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Configures Nginx to return the hostname in a custom HTTP response header
+
+apt-get update -y
+apt-get install -y nginx
+
+printf '%s\n' "add_header X-Served-By \$hostname always;" > /etc/nginx/conf.d/0-custom-http-response-header.conf
+
+if nginx -t; then
+    service nginx restart
+else
+    echo "Nginx configuration test failed"
+    exit 1
+fi
+
